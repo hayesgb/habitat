@@ -1,4 +1,6 @@
-habitat
+habitat challenge
+
+A data science project taken on as a challenge sponsored by the AnalyzeThis Meetup Group in the Twin Cities
 
 Start by creating an environment, and I installed Anaconda Python.  I called it "habitat".
 Run pip install -r requirements.txt
