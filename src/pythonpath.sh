@@ -1,1 +1,0 @@
-export PYTHONPATH=$PYTHONPATH:"/Users/Greg/Dropbox/tchfh/tchfh/habitat/src"
