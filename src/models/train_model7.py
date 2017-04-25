@@ -3,17 +3,12 @@ import os
 import numpy as np
 import pandas as pd
 from sklearn.base import BaseEstimator, TransformerMixin
-from sklearn.linear_model import LassoCV, RidgeClassifierCV, LogisticRegressionCV, SGDClassifier
-from sklearn.neighbors import KNeighborsClassifier
-from sklearn.naive_bayes import GaussianNB, BernoulliNB, MultinomialNB
+from sklearn.linear_model import LogisticRegressionCV
 from sklearn.preprocessing import PolynomialFeatures
-from sklearn.feature_selection import RFECV
-from sklearn.gaussian_process import GaussianProcessClassifier
 from sklearn.metrics import classification_report, roc_auc_score, accuracy_score, recall_score, precision_score
-from sklearn.model_selection import GridSearchCV, train_test_split
-from sklearn.svm import LinearSVC, SVC
-from sklearn.pipeline import Pipeline, FeatureUnion
-from sklearn.preprocessing import StandardScaler, LabelBinarizer, Imputer
+from sklearn.model_selection import train_test_split
+from sklearn.pipeline import Pipeline
+from sklearn.preprocessing import Imputer
 from sklearn.utils.validation import check_is_fitted
 from sklearn.externals import joblib
 from sklearn_pandas import DataFrameMapper
@@ -290,10 +285,8 @@ def main(df, zipcodes=filenames.zipcode_dfile, predict=False):
     print('Shape of the combined DF is:  {}'.format(combined_df.shape))
     print('Sort the combined DF by dates, and pass it for predictions...')
     combined_df.sort_values(by=['unemployment_date'], inplace=True)
-#    combined_df['age_t'] = combined_df['age'].apply(lambda x: 10**x)
     combined_df.to_csv(os.path.join(filenames.interim_data, 'test_file.csv'))
 
-    scores = []
     if predict is False:
         X = combined_df.drop(['2ndgft'], axis=1)
         print('This is the shape of X:  {}'.format(X.shape))
@@ -411,18 +404,13 @@ def main(df, zipcodes=filenames.zipcode_dfile, predict=False):
         # Fit and transform the training data, then train the classifier
         Xt = pipe.fit_transform(X)
         clf = LogisticRegressionCV(penalty='l1', class_weight='balanced', n_jobs=-1, verbose=1, scoring='recall', solver='liblinear', cv=5)
-#        clf = RidgeClassifierCV(normalize=True, cv=5, class_weight='balanced')
         clf.fit(Xt, y)
         print('Fit.')
         joblib.dump(pipe, filenames.classifier_pipeline)            # Save the trained pipeline transformer
         joblib.dump(clf, filenames.trained_classifier)                  # Save the trained classifier
-        # Transform the test data and predict the results
-#        print('Training accuracy score is:  {}'.format(clf.score(Xt, y)))
-        print('Scores are:  {}'.format(scores))
 
         # Transform the entire dataset and predict the results
         target_names = ['class 0', 'class 1']
-
         Xt = pipe.transform(combined_df)
         print('The shape of Xt is:  '.format(Xt.shape))
         yhat = clf.predict(Xt)
