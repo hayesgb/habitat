@@ -1,16 +1,10 @@
-import numpy as np
-import pandas as pd
-
-
 import os
 import time
 
 import numpy as np
 import pandas as pd
 from uszipcode import ZipcodeSearchEngine
-import filenames as filenames
-
-
+from . import filenames as filenames
 
 
 def drop_ignores(dframe, reference):
@@ -72,12 +66,22 @@ def _convert_zip( city,state,idx, errors):
         return zipcode, errors
 
 def _get_city(zipcodes, df, idx, fullzip):
+    '''
+    Where possible, match up a city with the zipcode
+    :param zipcodes:
+    :param df:
+    :param idx:
+    :param fullzip:
+    :return:
+    '''
+    print('Getting cities for {}..'.format(idx))
     if type(df.loc[idx, 'city_x']) == str:
         zipcodes.loc[idx, fullzip[2]] = df.loc[idx, 'city_x']
     elif type(df.loc[idx, 'city_y']) == str:
         zipcodes.loc[idx, [fullzip[2]]] = (df.loc[idx, 'city_y'].split(',')[0])
     else:
         print('No apparent city match...')
+
     return zipcodes
 
 def get_zipcodes(df, col1='zip', col2='zip code', impute_zipcode=True):
@@ -95,7 +99,6 @@ def get_zipcodes(df, col1='zip', col2='zip code', impute_zipcode=True):
     city_state_cols = ['city_x', 'state', 'city_y', 'state/region']
     zipcodes = pd.DataFrame(index = df.index, columns=fullzip)
     for idx in df.index:
-        print(idx)
         try:
             if (df.loc[idx, col1] == df.loc[idx, col2]) & (df.loc[idx, col1][0] != '0'):
                 temp = df.loc[idx, col1][0].split('-')
@@ -107,14 +110,16 @@ def get_zipcodes(df, col1='zip', col2='zip code', impute_zipcode=True):
                     if type(df.loc[idx, 'city_x']) == str:
                         zipcodes.loc[idx, fullzip[2]] = df.loc[idx, 'city_x']
                 else:
-                    print('Could not solve identical column problem...')
+#                    print('Could not solve identical column problem...')
+                    pass
             elif len(df.loc[idx, col1]) == 2:
                 zipcodes.loc[idx, fullzip[0]] = df.loc[idx, col1][0]
                 zipcodes.loc[idx, fullzip[1]] = df.loc[idx, col1][1]
-            elif type(df.loc[idx, col2]) != np.float:
-                if (len(df.loc[idx, col2]) == 2):
-                    zipcodes.loc[idx, fullzip[0]] = df.loc[idx, col2][0]
-                    zipcodes.loc[idx, fullzip[1]] = df.loc[idx, col2][1]
+                print(zipcodes.loc[idx, fullzip[0]])
+            #elif type(df.loc[idx, col2]) != np.float:
+            #    if (len(df.loc[idx, col2]) == 2):
+            #        zipcodes.loc[idx, fullzip[0]] = df.loc[idx, col2][0]
+            #        zipcodes.loc[idx, fullzip[1]] = df.loc[idx, col2][1]
             elif len(df.loc[idx, col1][0]) == 5:
                 zipcodes.loc[idx, fullzip[0]] = df.loc[idx, col1][0]
             if type(df.loc[idx, col2]) != np.float:
@@ -132,7 +137,7 @@ def get_zipcodes(df, col1='zip', col2='zip code', impute_zipcode=True):
                 state1 = df.loc[idx, 'state'].split(',')[0].strip()
                 zipcode_, errors = _convert_zip(city1, state1, idx, errors)
                 if zipcode_ is None:
-                    print('Need to write code to find zipcode if it occurs in the dataframe.')
+#                    print('Need to write code to find zipcode if it occurs in the dataframe.')
                     time.sleep(.5)
                 else:
                     zipcodes.loc[idx, fullzip[0]] = zipcode_
@@ -142,14 +147,14 @@ def get_zipcodes(df, col1='zip', col2='zip code', impute_zipcode=True):
                 state2 = None
                 city_y_col = df.loc[idx, 'city_y'].split(',')
                 if (len(city_y_col)) == 1:  # if 'city_y' only contains one item after converting to a list and splitting by commas
-                    print('The length of city_y_col is:  {}'.format(len(city_y_col)))
+#                    print('The length of city_y_col is:  {}'.format(len(city_y_col)))
                     time.sleep(.5)
                     city2 = city_y_col[0]
                     if (type(df.loc[idx, 'state/region']) == str):
                         region_col = df.loc[idx, 'state/region'].split(',')
                         if len(region_col[0]) == 2:
                             state2 = region_col[0].strip()
-                            print('The state for {} is {}'.format(city2, state2))
+#                            print('The state for {} is {}'.format(city2, state2))
                     if (city2 is not None) & (state2 is not None):
                         zipcode_, errors =  _convert_zip(city2, state2, idx, errors)
                         if zipcode_ is None:
@@ -164,7 +169,8 @@ def get_zipcodes(df, col1='zip', col2='zip code', impute_zipcode=True):
                     zipcodes.loc[idx, fullzip[0]], errors = _convert_zip(city2, state2, idx, errors)  # Changed this to city2, state2
                 else:
                     # Need to search dataframe to find matching zipcode in case of inability to locate in database
-                    print('Could not resolve {}'.format(df.loc[idx]))
+#                    print('Could not resolve {}'.format(df.loc[idx]))
+                    pass
             elif (type(df.loc[idx, 'state/region']) == str):
                 print('Parsing state/region column...')
                 region_col = df.loc[idx, 'state/region'].split(',')
@@ -178,9 +184,11 @@ def get_zipcodes(df, col1='zip', col2='zip code', impute_zipcode=True):
                         zipcodes.loc[idx, fullzip[0]] = city2
                         zipcodes.loc[idx, fullzip[1]] = state2
                 else:
-                    print('Could no solve state/region column...')
+#                    print('Could no solve state/region column...')
+                    pass
             else:
                 print('Skipped {}'.format(df.loc[idx]))
+                input('')
             zipcodes = _get_city(zipcodes=zipcodes, df=df, idx=idx, fullzip=fullzip)
         except TypeError:
             print('Error created by {}'.format(idx))
@@ -196,7 +204,7 @@ def get_zipcodes(df, col1='zip', col2='zip code', impute_zipcode=True):
                 best_zipcode_guess = temps_.iloc[:,0].value_counts()#.tolist()[1]
                 best_zipcode_guess.dropna(inplace=True, axis=0)
                 best_guess = best_zipcode_guess.idxmax()
-                print('Best guess for {} is {}'.format(city, best_guess))
+#                print('Best guess for {} is {}'.format(city, best_guess))
                 zipcodes.loc[idx, fullzip[0]] = best_guess
     # Strip any letters out of zipcodes in both column 1 and columns 2
     zipcodes[fullzip[0]] = [zcode.lstrip('a-zA-Z') for zcode in zipcodes[fullzip[0]]]
@@ -222,8 +230,26 @@ def get_zipcodes(df, col1='zip', col2='zip code', impute_zipcode=True):
     print('Saving zipcode errors to a csv file titled:  zip_errors.csv')
     zip_errors = pd.DataFrame(errors)
     zip_errors.to_csv(os.path.join(filenames.data_folder, 'zipcode_errors.csv'))
-    return zipcodes
 
+    # Get demographic data
+    zipcode_demographic_dict={}
+    with ZipcodeSearchEngine() as search:
+        for idx in zipcodes.index:
+            if idx in zipcode_demographic_dict:
+                pass
+            else:
+                zipcode_demographic_dict[idx] = search.by_zipcode(zipcodes.loc[idx, 'main zipcode']).to_dict()
+    zipcode_demographic_df = pd.DataFrame.from_dict(zipcode_demographic_dict, orient='index')
+    print(zipcode_demographic_df.columns.tolist())
+    cols = zipcode_demographic_df.columns.tolist()
+    cols = [col.lower() for col in cols]
+    zipcode_demographic_df.columns = cols
+    zipcode_demographic_df.index.names=['id']
+#    zipcode_demographic_df['wealth/household'] = zipcode_demographic_df['wealthy'].divide(zipcode_demographic_df['houseofunits'])
+#    zipcode_demographic_df['wages/household'] = zipcode_demographic_df['totalwages'].divide(zipcode_demographic_df['houseofunits'])
+#    zipcode_demographic_df.to_csv(filenames.zipcode_demographic_data)
+
+    return zipcodes, zipcode_demographic_df
 
 def clean_giving_profile(df, time_cols, donation_cols):
     '''
@@ -255,7 +281,7 @@ def clean_giving_profile(df, time_cols, donation_cols):
     except ValueError:
         print('The donation columns are not present in the dataframe columns.')
     df['made second donation'] = np.where(df['second gift date'].notnull(), 1, 0)
-#    df.to_csv(filenames.cleaned_dfiles)
+    print(df)
     return df
 
 def clean_zipcodes(df):
@@ -267,6 +293,9 @@ def clean_zipcodes(df):
     '''
 #    df = pd.read_csv(fname, index_col='id')
     print('Cleaning up the zipcodes...')
+    print(df['zip'])
+    print(df['zip'].dtypes)
+    input('')
     df['zip'].fillna('0', inplace=True)
     df['zip'] = df['zip'].str.split('-')
 #    print(df['zip'].shape)
@@ -274,13 +303,14 @@ def clean_zipcodes(df):
     df['zip'] = strip_whitespaces_from_lists(df['zip'])
     df['zip code'].fillna('0', inplace=True)
     df['zip code'] = df['zip code'].str.split('-')
-    df.drop('nan', inplace=True, axis=0)          # Drop any rows that contain nans in the index
+#    df.drop('nan', inplace=True, axis=0)          # Drop any rows that contain nans in the index
+
     df['zip code'] = strip_whitespaces_from_lists(df['zip code'])
-    df = get_zipcodes(df, impute_zipcode=False)
+    df, zipcode_demographic_df = get_zipcodes(df, impute_zipcode=False)
     print('Saving zipcode datafile...')
     df.to_csv(filenames.zipcode_dfile, index_label='id')
     print('Shape of the zipcode datafile is: {}'.format(df.shape))
-    return df
+    return df, zipcode_demographic_df
 
 
 

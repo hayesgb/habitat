@@ -2,7 +2,7 @@ import click
 
 from src.data.make_dataset2 import main as make_dset
 from src.models.regression_model3 import main as regression_model
-from src.models.train_model7 import main as use_classifier
+from src.models.train_model import main as use_classifier
 import src.filenames as filenames
 import os
 
@@ -21,7 +21,7 @@ def make_dataset():
 @cli.command()
 def train_classifier():
     print('Training the classifier...')
-    use_classifier(df=os.path.join(filenames.interim_data, 'unemployment_data.csv'), zipcodes=filenames.zipcode_dfile, predict=False)
+    use_classifier(df=os.path.join(filenames.interim_data, 'cross_sectional.csv'), zipcodes=filenames.zipcode_dfile, predict=False)
 
 
 @cli.command()
